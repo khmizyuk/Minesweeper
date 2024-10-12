@@ -30,7 +30,6 @@ import javafx.scene.input.KeyCode;
 public class Minesweeper extends Application {
 	
 	private int SIZE = 8;
-	private int DEACTIVATION = 6;
 	private final int HEADQUARTERS = 2;
 	private EventHandler<MouseEvent> buttonOpenListener;
 	private EventHandler<ActionEvent> buttonResetListener;
@@ -48,6 +47,7 @@ public class Minesweeper extends Application {
 	Label minesLabel = new Label();
 	Label headquartersLabel = new Label();
 	Label timerLabel = new Label();
+	Label levelLabel = new Label();
 	
 	Label combinationLabel = new Label();
 	Label timerDeactivationLabel = new Label();
@@ -63,8 +63,8 @@ public class Minesweeper extends Application {
     boolean timerStarted = false; 
     int remainingHeadquarters = HEADQUARTERS;
     
-    int mineCount = 10;
-    int flagCount = 10;
+    int mineCount = 8; //
+    int flagCount = mineCount;
     
     Timeline timeline;
     Timeline timelineDeactivation;
@@ -81,6 +81,7 @@ public class Minesweeper extends Application {
     
     MineTile sharedBtn;
 	
+    // cell set up
 	private class MineTile extends Button {
         int row;
         int col;
@@ -111,11 +112,12 @@ public class Minesweeper extends Application {
 		setMines();
 		setHeadquarters();
 		
+		//UI
+		
 		BorderPane root = new BorderPane();
 		root.setCenter(grid);
 		
 		textLabel.setText("In progress");
-		
 		timerLabel.setText("0 seconds");
 		
 		VBox statusBox = new VBox(2);
@@ -135,6 +137,7 @@ public class Minesweeper extends Application {
 		
 		Region spacerH = new Region();
 		Region spacerH2 = new Region();
+		Region spacerH3 = new Region();
 		Region spacerV1 = new Region();
 		Region spacerV2 = new Region();
 		Region spacerV3 = new Region();
@@ -145,6 +148,7 @@ public class Minesweeper extends Application {
 		VBox.setVgrow(spacerV4, Priority.ALWAYS);
 		HBox.setHgrow(spacerH, Priority.ALWAYS);
 		HBox.setHgrow(spacerH2, Priority.ALWAYS);
+		HBox.setHgrow(spacerH3, Priority.ALWAYS);
 		
 		resetButton = new Button("Reset");
 		resetButton.setOnAction(buttonResetListener);
@@ -155,8 +159,10 @@ public class Minesweeper extends Application {
 		intermediateButton = new Button("Intermediate");
 		intermediateButton.setOnAction(buttonIntermediateListener);
 		
+		levelLabel.setText("Beginner");
+		
 		HBox buttons = new HBox(10);
-		buttons.getChildren().addAll(beginnerButton, intermediateButton);
+		buttons.getChildren().addAll(beginnerButton, intermediateButton, spacerH3, levelLabel);
 		
 		VBox vbox = new VBox(2);
 		vbox.getChildren().addAll(statusBox, spacerV1, data, spacerV2, resetButton);
@@ -210,6 +216,10 @@ public class Minesweeper extends Application {
 			public void handle(ActionEvent event) 
 			{
 				System.out.println("Beginner level selected");
+				levelLabel.setText("Beginner");
+				mineCount = 8;
+				resetGame();
+				
 			}
 		};
 		
@@ -219,6 +229,10 @@ public class Minesweeper extends Application {
 			public void handle(ActionEvent event) 
 			{
 				System.out.println("Intermediate level selected");
+				levelLabel.setText("Intermediate");
+				mineCount = 12;
+				resetGame();
+				
 			}
 		};
 		
@@ -292,17 +306,6 @@ public class Minesweeper extends Application {
 		mineList = new ArrayList<MineTile>();
 		mineListHeadquarters = new ArrayList<MineTile>();
 		
-//		mineList.add(board[6][0]);
-//		mineList.add(board[6][2]);
-//		mineList.add(board[6][4]);
-//		mineList.add(board[6][6]);
-//		mineList.add(board[7][1]);
-//		mineList.add(board[7][3]);
-//		mineList.add(board[7][5]);
-//		mineList.add(board[7][7]);
-//		mineList.add(board[7][6]);
-//		mineList.add(board[6][7]);
-		
 		int mineLeft = mineCount;
         while (mineLeft > 0) {
             int row = random.nextInt(SIZE); 
@@ -321,9 +324,6 @@ public class Minesweeper extends Application {
 		headquartersList = new ArrayList<>();
 		headquartersOpenList = new ArrayList<>();
 		
-//		headquartersList.add(board[1][1]);
-//		headquartersList.add(board[0][0]);
-		
 		int headquarterLeft = HEADQUARTERS;
 		while (headquarterLeft > 0) {
 			 int row = random.nextInt(SIZE);
@@ -338,46 +338,48 @@ public class Minesweeper extends Application {
 		}
 	}
 	
-	 boolean isNearMine(int row, int col) {
+	//check whether any mines are above/on the left/on the right/below
+	boolean isNearMine(int row, int col) {
 		 
-		 int minesFound = 0;
-			
-		 minesFound += countMine(row-1, col-1);
-		 minesFound += countMine(row-1, col); 
-	 	 minesFound += countMine(row-1, col+1);
+		int minesFound = 0;
+		 
+		minesFound += countMine(row-1, col-1);
+		minesFound += countMine(row-1, col); 
+		minesFound += countMine(row-1, col+1);
 		
-		 minesFound += countMine(row, col-1);
-		 minesFound += countMine(row, col+1);
+		minesFound += countMine(row, col-1);
+		minesFound += countMine(row, col+1);
 		
-		 minesFound += countMine(row+1, col-1);
-		 minesFound += countMine(row+1, col); 
-		 minesFound += countMine(row+1, col+1);
+		minesFound += countMine(row+1, col-1);
+		minesFound += countMine(row+1, col); 
+		minesFound += countMine(row+1, col+1);
 		 
-		 if (minesFound > 0)
-			 return true;
+		if (minesFound > 0)
+			return true;
 		 
-		 return false;
+		return false;
     }
-	 
-	 boolean isNearHeadquarter(int row, int col) {
+	
+	//check whether any HQ are above/on the left/on the right/below
+	boolean isNearHeadquarter(int row, int col) {
 		 
-		 int headquartersFound = 0;
+		int headquartersFound = 0;
 			
-		 headquartersFound += countHeadquarters(row-1, col-1);
-		 headquartersFound += countHeadquarters(row-1, col); 
-		 headquartersFound += countHeadquarters(row-1, col+1);
+		headquartersFound += countHeadquarters(row-1, col-1);
+		headquartersFound += countHeadquarters(row-1, col); 
+		headquartersFound += countHeadquarters(row-1, col+1);
 		
-		 headquartersFound += countHeadquarters(row, col-1);
-		 headquartersFound += countHeadquarters(row, col+1);
+		headquartersFound += countHeadquarters(row, col-1);
+		headquartersFound += countHeadquarters(row, col+1);
 		
-		 headquartersFound += countHeadquarters(row+1, col-1);
-		 headquartersFound += countHeadquarters(row+1, col); 
-		 headquartersFound += countHeadquarters(row+1, col+1);
+		headquartersFound += countHeadquarters(row+1, col-1);
+		headquartersFound += countHeadquarters(row+1, col); 
+		headquartersFound += countHeadquarters(row+1, col+1);
 		 
-		 if (headquartersFound > 0)
-			 return true;
+		if (headquartersFound > 0)
+			return true;
 		 
-		 return false;
+		return false;
     }
 	
 	void revealMines() 
@@ -393,6 +395,7 @@ public class Minesweeper extends Application {
         timeline.stop(); 
     }
 	
+	//present HQ at the field
 	void revealHeadquarter(int row, int col) 
 	{
 		if (board[row][col].getText().isEmpty()) {
@@ -417,6 +420,7 @@ public class Minesweeper extends Application {
 		}
     }
 	
+	//opening cells while empty
 	void checkMine(int row, int col) {
 		
 		if (row < 0 || row >= SIZE || col < 0 || col >= SIZE) {
@@ -432,6 +436,7 @@ public class Minesweeper extends Application {
 	    
 	    MineTile btn = board[row][col];
 	    
+	    //cell is generated mine next to HQ
 	    if (mineListHeadquarters.contains(btn)) {
 			
 			sharedBtn = btn;
@@ -657,7 +662,6 @@ public class Minesweeper extends Application {
         timerDeactivationLabel.setText("");  
         openedLabel.setText("0 cells opened");
         
-        //
         if (timelineDeactivation != null) timelineDeactivation.setCycleCount(6);  
         
         openedCellsCounter = 0;
